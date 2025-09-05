@@ -29,23 +29,59 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Basic Usage
+The script supports three different ways to specify repositories:
+
+### 1. Direct Repository URLs
 
 ```bash
 python dbdemos_tracker_updater.py --github-token YOUR_TOKEN https://github.com/user/repo1 https://github.com/user/repo2
 ```
 
-### With Environment Variable
+### 2. From a Text File
+
+Create a text file with repository URLs (one per line):
+
+```bash
+# repos.txt
+https://github.com/user/repo1
+https://github.com/user/repo2
+# This is a comment - lines starting with # are ignored
+https://github.com/user/repo3
+```
+
+Then run:
+
+```bash
+python dbdemos_tracker_updater.py --github-token YOUR_TOKEN --from-file repos.txt
+```
+
+### 3. From a GitHub Organization
+
+Process all repositories in an organization (excludes forks and archived repositories):
+
+```bash
+python dbdemos_tracker_updater.py --github-token YOUR_TOKEN --from-org my-organization
+```
+
+### Additional Options
+
+#### With Environment Variable
 
 ```bash
 export GITHUB_TOKEN=your_token_here
-python dbdemos_tracker_updater.py --github-token $GITHUB_TOKEN https://github.com/user/repo
+python dbdemos_tracker_updater.py --github-token $GITHUB_TOKEN --from-org my-organization
 ```
 
-### Verbose Logging
+#### Verbose Logging
 
 ```bash
-python dbdemos_tracker_updater.py --github-token YOUR_TOKEN --verbose https://github.com/user/repo
+python dbdemos_tracker_updater.py --github-token YOUR_TOKEN --verbose --from-file repos.txt
+```
+
+#### Help
+
+```bash
+python dbdemos_tracker_updater.py --help
 ```
 
 ## How It Works

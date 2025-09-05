@@ -50,6 +50,40 @@ class DBDemosTrackerUpdater:
                 self.logger.error(f"Failed to process {repo_url}: {str(e)}")
                 continue
     
+    def get_repositories_from_file(self, file_path: str) -> List[str]:
+        """Read repository URLs from a text file."""
+        repo_urls = []
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        repo_urls.append(line)
+            self.logger.info(f"Loaded {len(repo_urls)} repositories from {file_path}")
+            return repo_urls
+        except Exception as e:
+            self.logger.error(f"Failed to read repository file {file_path}: {str(e)}")
+            return []
+    
+    def get_repositories_from_org(self, org_name: str) -> List[str]:
+        """Get all repositories from a GitHub organization."""
+        try:
+            org = self.github_client.get_organization(org_name)
+            repos = []
+            
+            self.logger.info(f"Fetching repositories from organization: {org_name}")
+            
+            for repo in org.get_repos():
+                if not repo.archived and not repo.fork:
+                    repos.append(repo.clone_url)
+            
+            self.logger.info(f"Found {len(repos)} active repositories in organization {org_name}")
+            return repos
+            
+        except Exception as e:
+            self.logger.error(f"Failed to fetch repositories from organization {org_name}: {str(e)}")
+            return []
+    
     def process_single_repository(self, repo_url: str) -> None:
         """Process a single repository."""
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -499,13 +533,39 @@ This change ensures that demo tracking is properly configured and will start aut
 def main():
     """Main entry point for the script."""
     parser = argparse.ArgumentParser(
-        description="Automatically check and update repositories with dbdemos tracker"
+        description="Automatically check and update repositories with dbdemos tracker",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Process specific repositories
+  python %(prog)s --github-token TOKEN https://github.com/user/repo1 https://github.com/user/repo2
+
+  # Process repositories from a file
+  python %(prog)s --github-token TOKEN --from-file repos.txt
+
+  # Process all repositories in an organization
+  python %(prog)s --github-token TOKEN --from-org my-organization
+        """
     )
-    parser.add_argument(
+    
+    # Create mutually exclusive group for input methods
+    input_group = parser.add_mutually_exclusive_group(required=True)
+    input_group.add_argument(
         'repositories',
-        nargs='+',
+        nargs='*',
         help='Git repository URLs to process'
     )
+    input_group.add_argument(
+        '--from-file',
+        metavar='FILE',
+        help='Read repository URLs from a text file (one URL per line, # for comments)'
+    )
+    input_group.add_argument(
+        '--from-org',
+        metavar='ORG',
+        help='Process all repositories from a GitHub organization (excludes forks and archived repos)'
+    )
+    
     parser.add_argument(
         '--github-token',
         required=True,
@@ -520,6 +580,10 @@ def main():
     
     args = parser.parse_args()
     
+    # Validate that at least one input method is provided
+    if not args.repositories and not args.from_file and not args.from_org:
+        parser.error("Must specify repositories, --from-file, or --from-org")
+    
     # Set log level
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -527,9 +591,24 @@ def main():
     # Initialize updater
     updater = DBDemosTrackerUpdater(args.github_token)
     
+    # Determine repository source and get URLs
+    repo_urls = []
+    
+    if args.repositories:
+        repo_urls = args.repositories
+    elif args.from_file:
+        repo_urls = updater.get_repositories_from_file(args.from_file)
+    elif args.from_org:
+        repo_urls = updater.get_repositories_from_org(args.from_org)
+    
+    if not repo_urls:
+        logging.error("No repositories found to process")
+        return 1
+    
     # Process repositories
-    updater.process_repositories(args.repositories)
+    updater.process_repositories(repo_urls)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
