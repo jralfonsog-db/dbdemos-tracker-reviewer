@@ -538,13 +538,16 @@ def main():
         epilog="""
 Examples:
   # Process specific repositories
-  python %(prog)s --github-token TOKEN https://github.com/user/repo1 https://github.com/user/repo2
+  export GITHUB_TOKEN=your_token_here
+  python %(prog)s https://github.com/user/repo1 https://github.com/user/repo2
 
   # Process repositories from a file
-  python %(prog)s --github-token TOKEN --from-file repos.txt
+  export GITHUB_TOKEN=your_token_here
+  python %(prog)s --from-file repos.txt
 
   # Process all repositories in an organization
-  python %(prog)s --github-token TOKEN --from-org my-organization
+  export GITHUB_TOKEN=your_token_here
+  python %(prog)s --from-org my-organization
         """
     )
     
@@ -567,11 +570,6 @@ Examples:
     )
     
     parser.add_argument(
-        '--github-token',
-        required=True,
-        help='GitHub personal access token for creating PRs'
-    )
-    parser.add_argument(
         '--verbose',
         '-v',
         action='store_true',
@@ -584,12 +582,20 @@ Examples:
     if not args.repositories and not args.from_file and not args.from_org:
         parser.error("Must specify repositories, --from-file, or --from-org")
     
+    # Get GitHub token from environment variable
+    try:
+        github_token = os.environ["GITHUB_TOKEN"]
+    except KeyError:
+        print("ERROR: GITHUB_TOKEN environment variable is required", file=sys.stderr)
+        print("Please set it with: export GITHUB_TOKEN=your_token_here", file=sys.stderr)
+        return 1
+    
     # Set log level
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     
     # Initialize updater
-    updater = DBDemosTrackerUpdater(args.github_token)
+    updater = DBDemosTrackerUpdater(github_token)
     
     # Determine repository source and get URLs
     repo_urls = []

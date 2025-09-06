@@ -25,16 +25,21 @@ pip install -r requirements.txt
 
 3. Set up GitHub authentication:
    - Create a GitHub Personal Access Token with repository permissions
-   - Export it as an environment variable or use the `--github-token` parameter
+   - Export it as an environment variable: `export GITHUB_TOKEN=your_token_here`
 
 ## Usage
+
+**Important**: Set your GitHub token as an environment variable before running:
+```bash
+export GITHUB_TOKEN=your_token_here
+```
 
 The script supports three different ways to specify repositories:
 
 ### 1. Direct Repository URLs
 
 ```bash
-python dbdemos_tracker_updater.py --github-token YOUR_TOKEN https://github.com/user/repo1 https://github.com/user/repo2
+python dbdemos_tracker_updater.py https://github.com/user/repo1 https://github.com/user/repo2
 ```
 
 ### 2. From a Text File
@@ -52,7 +57,7 @@ https://github.com/user/repo3
 Then run:
 
 ```bash
-python dbdemos_tracker_updater.py --github-token YOUR_TOKEN --from-file repos.txt
+python dbdemos_tracker_updater.py --from-file repos.txt
 ```
 
 ### 3. From a GitHub Organization
@@ -60,22 +65,15 @@ python dbdemos_tracker_updater.py --github-token YOUR_TOKEN --from-file repos.tx
 Process all repositories in an organization (excludes forks and archived repositories):
 
 ```bash
-python dbdemos_tracker_updater.py --github-token YOUR_TOKEN --from-org my-organization
+python dbdemos_tracker_updater.py --from-org my-organization
 ```
 
 ### Additional Options
 
-#### With Environment Variable
-
-```bash
-export GITHUB_TOKEN=your_token_here
-python dbdemos_tracker_updater.py --github-token $GITHUB_TOKEN --from-org my-organization
-```
-
 #### Verbose Logging
 
 ```bash
-python dbdemos_tracker_updater.py --github-token YOUR_TOKEN --verbose --from-file repos.txt
+python dbdemos_tracker_updater.py --verbose --from-file repos.txt
 ```
 
 #### Help
